@@ -89,8 +89,8 @@ void pong(){
   for (int show = 0; show < SHOWCLOCK ; show++)
   {
   long showTime = millis();
-    now = dstAdjusted.time(&dstAbbrev);
-    timeinfo = localtime (&now);
+//    now = dstAdjusted.time(&dstAbbrev);
+  //  timeinfo = localtime (&now);
     while((millis() - showTime) < 6*showClock)
   {
     cls();

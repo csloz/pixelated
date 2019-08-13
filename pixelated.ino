@@ -50,6 +50,7 @@
 #include <DNSServer.h>
 #include <WebServer.h>
 #include <WiFiManager.h>   //git clone https://github.com/tzapu/WiFiManager.git --branch development in library folder
+#include <HTTPClient.h>
 
 #include <PubSubClient.h> //MQTT
 
@@ -67,7 +68,7 @@
 
 #include <SD.h>
 #include <SPI.h>
-#include <simpleDSTadjust.h>
+//#include <simpleDSTadjust.h>
 
 #include "GifDecoder.h"
 #include "FilenameFunctions.h"
@@ -83,6 +84,10 @@
 
 //Include EEPROM Library
 #include <EEPROM.h>
+
+//Include JSON Parser Library.  Too memory heavy, using a thinner one..
+#include <ArduinoJson.h>
+
 
 //******************************************************************************************************************
 //DEFINE Print Debugging
@@ -264,13 +269,13 @@ struct tm * timeinfo;
 const String WDAY_NAMES[] = {"SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"};
 const String MONTH_NAMES[] = {"JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"};
 
-struct dstRule StartRule = {"CEST", Last, Sun, Mar, 2, 3600}; // Central European Summer Time = UTC/GMT +2 hours
-struct dstRule EndRule = {"CET", Last, Sun, Oct, 2, 0};       // Central European Time = UTC/GMT +1 hour
+//struct dstRule StartRule = {"CEST", Last, Sun, Mar, 2, 3600}; // Central European Summer Time = UTC/GMT +2 hours
+//struct dstRule EndRule = {"CET", Last, Sun, Oct, 2, 0};       // Central European Time = UTC/GMT +1 hour
 #define UTC_OFFSET +8
 #define NTP_SERVERS "0.ch.pool.ntp.org", "1.ch.pool.ntp.org", "2.ch.pool.ntp.org"
 
 
-simpleDSTadjust dstAdjusted(StartRule, EndRule);
+//simpleDSTadjust dstAdjusted(StartRule, EndRule);
 
 //******************************************************************************************************************
 
@@ -395,7 +400,7 @@ PubSubClient mqttclient(espClient);
 
 
 
-
+void DoStocks(); //defined elsewhere
 void setup_conway(); //Defined elsewhere.
 
 void setup_sd() {
@@ -492,6 +497,7 @@ void setup_wifi() {
           //Re-read EEPROM as it sets up the MQTT vars
           ReadEEPROM();
     }
+
 }
 
 
@@ -806,7 +812,7 @@ void setup() {
   //setup_sd();
 
   //Setup GIF
-  setup_gif();
+ // setup_gif();
 
   //Setup Conway random
   setup_conway();
@@ -1156,7 +1162,7 @@ void  pollIR (){
 
 }
 #endif
-  
+
 
 int buttonState;
 
@@ -1170,7 +1176,8 @@ void loop() {
 #define SNEK 7
 #define COLOR_TEST 8
 #define STARFIELD 9
-#define MAX_FX 10
+#define STOCKS 10
+#define MAX_FX 11
 
 */
   
@@ -1238,8 +1245,12 @@ void loop() {
       case STARFIELD:
     //    DoStarField();
         DoMenu();
-
+        break;
         
+      case STOCKS:
+          DoStocks();
+          break;
+          
       default:
         break;  
     }
