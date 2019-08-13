@@ -30,7 +30,8 @@
  * SNEK 7 - Not implemented yet
  * COLOR_TEST 8 - Not implemented yet
  * STARFIELD 9 - Not implemented yet
- * MAX_FX 10
+ * STOCKS 10 - Not implemented yet
+ * MAX_FX 11
  *
  *  Compile options 1M / 3M FATFS
  *  Stick img.ffat at  0x111000 - 
@@ -346,10 +347,11 @@ int num_files;
 #define SNEK 7
 #define COLOR_TEST 8
 #define STARFIELD 9
-#define MAX_FX 10
+#define STOCKS 10
+#define MAX_FX 11
 
 
-int fx=6; //Hard code to pong for testing pong.
+int fx=10; //Hard code to stocks for testing.
 
 
 //******************************************************************************************************************
