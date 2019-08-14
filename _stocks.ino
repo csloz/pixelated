@@ -42,32 +42,90 @@ struct stock {
 
 stock Stocks;
 
+int currentCursor = COLUMNS;
+int offset =0;
+
+void displayStockScroller(){
+     String strText = "Crop Production is up 6.5% today said China Daily.   Rioting in Hong Kong is due to those pesky bad people.   Good News everybody, its a beautiful day out there in China, nothing bad happened. ";
+     String  t="";
+     int bits = strText.length();
+     const int width=18;
+     
+      //Show scroller at bottom 48
+      
+      matrix.setTextSize (1);
+      matrix.setTextColor(RED);
+      matrix.setTextWrap (false);
+      //matrix.print ("Text Scroller Location");
+/*
+        offset++;
+
+        if (offset < strText.length()) {
+            //Have text to pump into the blitter?
+            for (int i=0; i < width; i++)
+                t+= strText.charAt((offset +i) % strText.length());   
+        }
+        else {
+             //Reset scroller
+             offset =0;
+             for (int i=0; i < width; i++)
+                t+= strText.charAt((offset +i) % strText.length()); 
+        }
+        matrix.setCursor (0,50);
+        matrix.print ( t );
+        //DEBUG_PRINTLN (t);*/
+
+        matrix.setScrollMode (wrapForward);
+        
+}
+
+unsigned long time_now =0;
+unsigned long time_now2 =0;
+
 void DoStocks() {
-
-     //DoStocks Code Here...
-
-  GetStock("TSLA", "84CN3AUMFGSI2U6K");
-  delay (25000);//15 seconds
+  int Delay = 30* 1000; //Polling time for Stock
+  
+  
+  //Poll Stocks every Delay seconds.
+  if (millis() > time_now + Delay) {  //First time in millis will enter loop, after that will delay 
+          time_now=millis();
+          getStock("TSLA", "84CN3AUMFGSI2U6K");
+          //DEBUG_PRINTLN ("GOT STOCK");
+  }
+  if (millis() > time_now2) { //Only scroll every 200ms
+    time_now2 =millis()+200;
+    matrix.fillRect (0,45,64,20, BLACK);
+    displayStockScroller();
+  }
 }
 
 
-int GetStock (const char *stock_name, const char *stock_apikey) {
+
+int getStock (const char *stock_name, const char *stock_apikey) {
   String strCall;
 
 //  strCall = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=TSLA&interval=5min&apikey=8 4CN 3AU MFG SI2 U6K"
   strCall = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=" + String(stock_name) + "&interval=5min&apikey=" + String(stock_apikey);
  
 
-  //Lets setup a http client
   
-  //HTTPClient http;
+  
+//  #define DISABLE_STOCK_FALSE
+  #ifdef DISABLE_STOCK_FALSE
+  
+    //Lets setup a http client 
+    HTTPClient http;
     
- // http.begin (strCall);
- // int httpCode = http.GET();
-  int  httpCode= true;
+  http.begin (strCall);
+  int httpCode = http.GET();
+
+  #else 
+    int  httpCode= true;
+  #endif
+  
  
   if (httpCode) {  //Success?
-       /*
+       #ifdef DISABLE_STOCK_FALSE
         
        DEBUG_PRINTLN (strCall);
        String payload = http.getString();
@@ -88,7 +146,7 @@ int GetStock (const char *stock_name, const char *stock_apikey) {
 
        //JsonObject stockQuote = doc ["Global Quote"];
 
-       */
+       #endif
        
       // DEBUG_PRINTLN (String( stockQuote ["01. symbol"]));
       // DEBUG_PRINTLN (String( stockQuote ["05. price"]));
@@ -109,7 +167,7 @@ int GetStock (const char *stock_name, const char *stock_apikey) {
        } else {
           matrix.setTextColor (RED);
        }
-       matrix.drawFastHLine(2, 18, 6, 0xFEFE);
+       //matrix.drawFastHLine(2, 18, 6, 0xFEFE);
        matrix.setCursor (1,30);
        //matrix.print ("$ ");
        
