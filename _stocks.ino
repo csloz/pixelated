@@ -27,6 +27,25 @@ https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=TSLA&interval=5mi
 
 */
 
+int moon_ico [50] = {
+  //3 nuances: 0x18c3 < 0x3186 < 0x4a49
+  0x0000, 0x4a49, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+  0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x18c3,
+  0x0000, 0x0000, 0x0000, 0x4a49, 0x3186, 0x3186, 0x18c3, 0x0000, 0x0000, 0x0000,
+  0x0000, 0x0000, 0x4a49, 0x4a49, 0x3186, 0x3186, 0x3186, 0x18c3, 0x0000, 0x0000,
+  0x0000, 0x0000, 0x4a49, 0x3186, 0x3186, 0x3186, 0x3186, 0x18c3, 0x0000, 0x0000,
+};
+
+
+int sunny_ico [50] = {
+  0x0000, 0x0000, 0x0000, 0xffe0, 0x0000, 0x0000, 0xffe0, 0x0000, 0x0000, 0x0000,
+  0x0000, 0xffe0, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0xffe0, 0x0000,
+  0x0000, 0x0000, 0x0000, 0xffe0, 0xffe0, 0xffe0, 0xffe0, 0x0000, 0x0000, 0x0000,
+  0xffe0, 0x0000, 0xffe0, 0xffe0, 0xffe0, 0xffe0, 0xffe0, 0xffe0, 0x0000, 0xffe0,
+  0x0000, 0x0000, 0xffe0, 0xffe0, 0xffe0, 0xffe0, 0xffe0, 0xffe0, 0x0000, 0x0000,
+};
+
+
 struct stock {
   const char* stock_symbol =  "TSLA";
   float stock_open =  232.9900;
@@ -57,7 +76,7 @@ void displayStockScroller(){
       matrix.setTextColor(RED);
       matrix.setTextWrap (false);
       //matrix.print ("Text Scroller Location");
-/*
+
         offset++;
 
         if (offset < strText.length()) {
@@ -73,9 +92,9 @@ void displayStockScroller(){
         }
         matrix.setCursor (0,50);
         matrix.print ( t );
-        //DEBUG_PRINTLN (t);*/
+        //DEBUG_PRINTLN (t);
 
-        matrix.setScrollMode (wrapForward);
+        //matrix.setScrollMode (wrapForward);
         
 }
 
@@ -110,7 +129,7 @@ int getStock (const char *stock_name, const char *stock_apikey) {
 
   
   
-//  #define DISABLE_STOCK_FALSE
+//  #define DISABLE_STOCK_FALSE as API dead and need to test..
   #ifdef DISABLE_STOCK_FALSE
   
     //Lets setup a http client 
@@ -192,6 +211,10 @@ int getStock (const char *stock_name, const char *stock_apikey) {
        matrix.setCursor (32,40);
        matrix.print ( Stocks.stock_change_percent,2);
        matrix.print ("%");
+
+       //Draw Moon or Day Icon
+       matrix.setCursor (48,2);
+       matrix.drawIcon ( sunny_ico, 48, 2, 10, 5);
   }
   else { //Failed HTTP
     DEBUG_PRINTLN ("[HTTP] Failed to get Stock");
