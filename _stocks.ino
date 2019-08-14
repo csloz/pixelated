@@ -100,16 +100,18 @@ void displayStockScroller(){
 
 unsigned long time_now =0;
 unsigned long time_now2 =0;
+int Delay = 1 * 1000; //Polling time for Stock
 
 void DoStocks() {
-  int Delay = 30* 1000; //Polling time for Stock
   
   
   //Poll Stocks every Delay seconds.
   if (millis() > time_now + Delay) {  //First time in millis will enter loop, after that will delay 
           time_now=millis();
-          getStock("TSLA", "84CN3AUMFGSI2U6K");
-          //DEBUG_PRINTLN ("GOT STOCK");
+          if (getStock("TSLA", "84CN3AUMFGSI2U6K")) {
+            DEBUG_PRINTLN ("GOT STOCK");
+            Delay = 300 * 1000; //Change to 5 min after success.
+          }
   }
   if (millis() > time_now2) { //Only scroll every 200ms
     time_now2 =millis()+200;
@@ -122,37 +124,40 @@ void DoStocks() {
 
 int getStock (const char *stock_name, const char *stock_apikey) {
   String strCall;
-
+  int err=0;
 //  strCall = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=TSLA&interval=5min&apikey=8 4CN 3AU MFG SI2 U6K"
   strCall = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=" + String(stock_name) + "&interval=5min&apikey=" + String(stock_apikey);
  
 
   
   
-//  #define DISABLE_STOCK_FALSE as API dead and need to test..
+  #define DISABLE_STOCK_FALSE //as API dead and need to test..
   #ifdef DISABLE_STOCK_FALSE
   
     //Lets setup a http client 
     HTTPClient http;
     
-  http.begin (strCall);
-  int httpCode = http.GET();
+    http.begin (strCall);
+    int httpCode = http.GET();
 
   #else 
     int  httpCode= true;
   #endif
   
  
-  if (httpCode) {  //Success?
+  if (httpCode>0) {  //Success?
        #ifdef DISABLE_STOCK_FALSE
-        
+       DEBUG_PRINTLN();
+       DEBUG_PRINT ("HTTP CODE");   DEBUG_PRINT (httpCode);  DEBUG_PRINT (" STATUS "); DEBUG_PRINTLN(err);
        DEBUG_PRINTLN (strCall);
+       delay (1000); //delay 1 seconds
+       
        String payload = http.getString();
-       delay (200);
-       DEBUG_PRINTLN (payload);
+       
+       DEBUG_PRINT ("Payload ["); DEBUG_PRINT (payload); DEBUG_PRINTLN ("]");
 
        //Got Payload?  Lets parse
-       const size_t capacity = JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(10) + 260;
+       const size_t capacity = JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(10) + 400;
        DynamicJsonDocument doc(capacity);
        
        DeserializationError error= deserializeJson (doc, payload);
@@ -163,7 +168,7 @@ int getStock (const char *stock_name, const char *stock_apikey) {
           return (false);
        }
 
-       //JsonObject stockQuote = doc ["Global Quote"];
+       JsonObject stockQuote = doc ["Global Quote"];
 
        #endif
        
@@ -172,8 +177,15 @@ int getStock (const char *stock_name, const char *stock_apikey) {
       // DEBUG_PRINTLN stockQuote ["09. change"]
       // Save all the values to the stock struct.
       //float flt = stockQuote ["05. price"].as<float>();
-       
+
+       //Update the values from JSON
+       Stocks.stock_price = stockQuote ["05. price"].as<float>();
+       Stocks.stock_symbol = stockQuote ["01. symbol"];
+       Stocks.stock_change = stockQuote ["09. change"].as<float>();
+       Stocks.stock_change_percent = stockQuote ["10. change percent"].as<float>();
+      
        //Draw Stock Symbol
+       matrix.clear();
        matrix.setTextColor  (WHITE);
        matrix.setCursor (2,15);
        matrix.setTextSize (2);
@@ -215,10 +227,10 @@ int getStock (const char *stock_name, const char *stock_apikey) {
        //Draw Moon or Day Icon
        matrix.setCursor (48,2);
        matrix.drawIcon ( sunny_ico, 48, 2, 10, 5);
+       return (true);
   }
   else { //Failed HTTP
     DEBUG_PRINTLN ("[HTTP] Failed to get Stock");
-    
     return (false);
   }
 
