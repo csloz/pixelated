@@ -27,30 +27,48 @@ https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=TSLA&interval=5mi
 
 */
 
+struct stock {
+  const char* stock_symbol =  "TSLA";
+  float stock_open =  232.9900;
+  float stock_high = 235.7700;
+  float stock_low = 228.7500;
+  float stock_price =  235.00;
+  long stock_volume =  4663937;
+  const char* stock_latest_trading_day = "2019-08-12";
+  float stock_previous_close =  235.0100;
+  float stock_change =  5.99;
+  float stock_change_percent = 2.62;
+};
+
+stock Stocks;
+
 void DoStocks() {
 
      //DoStocks Code Here...
 
   GetStock("TSLA", "84CN3AUMFGSI2U6K");
-  delay (15000);//15 seconds
+  delay (25000);//15 seconds
 }
 
 
 int GetStock (const char *stock_name, const char *stock_apikey) {
   String strCall;
 
-//  strCall = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=TSLA&interval=5min&apikey=84CN3AUMFGSI2U6K"
+//  strCall = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=TSLA&interval=5min&apikey=8 4CN 3AU MFG SI2 U6K"
   strCall = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=" + String(stock_name) + "&interval=5min&apikey=" + String(stock_apikey);
  
 
   //Lets setup a http client
-  HTTPClient http;
+  
+  //HTTPClient http;
     
-  http.begin (strCall);
-  int httpCode = http.GET();
-
+ // http.begin (strCall);
+ // int httpCode = http.GET();
+  int  httpCode= true;
+ 
   if (httpCode) {  //Success?
-
+       /*
+        
        DEBUG_PRINTLN (strCall);
        String payload = http.getString();
        delay (200);
@@ -67,19 +85,55 @@ int GetStock (const char *stock_name, const char *stock_apikey) {
           DEBUG_PRINTLN (error.c_str());
           return (false);
        }
-       DEBUG_PRINTLN ("**HERE**");
+
+       //JsonObject stockQuote = doc ["Global Quote"];
+
+       */
        
-       //DEBUG_PRINTLN (doc["01. symbol"]);
-       //DEBUG_PRINTLN (doc["05. price"]);
-       matrix.print ("STOCK:");
-       const char* str =doc[0];
-       matrix.print (str);
-       matrix.print (" $ ");
-       const char* str2 = doc[4];
-       matrix.print (str2); 
+      // DEBUG_PRINTLN (String( stockQuote ["01. symbol"]));
+      // DEBUG_PRINTLN (String( stockQuote ["05. price"]));
+      // DEBUG_PRINTLN stockQuote ["09. change"]
+      // Save all the values to the stock struct.
+      //float flt = stockQuote ["05. price"].as<float>();
        
-       DEBUG_PRINTLN ("**PAST**");
+       //Draw Stock Symbol
+       matrix.setTextColor  (WHITE);
+       matrix.setCursor (2,15);
+       matrix.setTextSize (2);
        
+       matrix.println (Stocks.stock_symbol);
+
+       //Draw Stock Value
+       if (Stocks.stock_change>0) {
+          matrix.setTextColor  (GREEN);
+       } else {
+          matrix.setTextColor (RED);
+       }
+       matrix.drawFastHLine(2, 18, 6, 0xFEFE);
+       matrix.setCursor (1,30);
+       //matrix.print ("$ ");
+       
+       matrix.println ( Stocks.stock_price,2); 
+             
+
+       //Draw Change
+       matrix.setTextColor  (WHITE);
+       matrix.setTextSize (1);
+       matrix.setCursor (1,40);
+       matrix.print ( Stocks.stock_change,2);
+
+       //Draw Triangle (up / down)
+       if (Stocks.stock_change>0) {
+            matrix.fillTriangle (48,31,52, 25, 56, 31, GREEN); 
+       }
+       else {
+          matrix.fillTriangle (52, 31, 48,25, 56,25, RED); 
+       }
+        
+       //Draw Change %
+       matrix.setCursor (32,40);
+       matrix.print ( Stocks.stock_change_percent,2);
+       matrix.print ("%");
   }
   else { //Failed HTTP
     DEBUG_PRINTLN ("[HTTP] Failed to get Stock");
@@ -105,3 +159,31 @@ int GetStock (const char *stock_name, const char *stock_apikey) {
  // matrix.print (doc["05. price"].as<char*>()); 
   
 }
+
+/*
+ #define BLACK    0x0000
+#define BLUE     0x001F
+#define RED      0xF800
+#define GREEN    0x07E0
+#define CYAN     0x07FF
+#define MAGENTA  0xF81F
+#define YELLOW   0xFFE0 
+#define WHITE    0xFFFF
+
+#define LED_RED_VERYLOW   (3 <<  11)
+#define LED_RED_LOW     (7 <<  11)
+#define LED_RED_MEDIUM    (15 << 11)
+#define LED_RED_HIGH    (31 << 11)
+
+#define LED_GREEN_VERYLOW (1 <<  5)   
+#define LED_GREEN_LOW     (15 << 5)  
+#define LED_GREEN_MEDIUM  (31 << 5)  
+#define LED_GREEN_HIGH    (63 << 5)  
+
+#define LED_BLUE_VERYLOW  3
+#define LED_BLUE_LOW    7
+#define LED_BLUE_MEDIUM   15
+#define LED_BLUE_HIGH     31
+
+
+ */
