@@ -74,7 +74,7 @@ void displayStockScroller(const String &strText){
      const int width=18;
      
       //Show scroller at bottom 48
-      matrix.setFont(&Org_01);
+      matrix.setFont(&Serif_plain_7);
       matrix.setTextSize (1);
       matrix.setTextColor(WHITE);
       matrix.setTextWrap (false);

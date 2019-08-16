@@ -53,10 +53,12 @@
 #include <WiFiManager.h>   //git clone https://github.com/tzapu/WiFiManager.git --branch development in library folder
 #include <HTTPClient.h>
 
-#include <PubSubClient.h> //MQTT
+#include <PubSubClient.h> //MQTT Nick O'Leary
 
 #include <Fonts/Picopixel.h> //Tiny font
 #include <Fonts/Org_01.h> //Serif Font
+#include "Fonts/Serif_plain.h" //**LOCAL** Serif font customized
+
 //#include <JPEGDecoder.h>
 
 //GIF Functions (w/filesystem)
