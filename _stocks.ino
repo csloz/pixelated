@@ -25,6 +25,8 @@
 
 https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=TSLA&interval=5min&apikey=84CN3AUMFGSI2U6K
 
+
+
 */
 
 int moon_ico [50] = {
@@ -62,18 +64,19 @@ struct stock {
 stock Stocks;
 
 int currentCursor = COLUMNS;
-int offset =0;
+int offset =COLUMNS;
 
-void displayStockScroller(){
-     String strText = "Crop Production is up 6.5% today said China Daily.   Rioting in Hong Kong is due to those pesky bad people.   Good News everybody, its a beautiful day out there in China, nothing bad happened. ";
+String strText = "Calling NewsAPI.org... ";   
+
+void displayStockScroller(const String &strText){
      String  t="";
      int bits = strText.length();
      const int width=18;
      
       //Show scroller at bottom 48
-      
+      matrix.setFont(&Org_01);
       matrix.setTextSize (1);
-      matrix.setTextColor(RED);
+      matrix.setTextColor(WHITE);
       matrix.setTextWrap (false);
       //matrix.print ("Text Scroller Location");
 
@@ -92,18 +95,18 @@ void displayStockScroller(){
         }
         matrix.setCursor (0,50);
         matrix.print ( t );
-        //DEBUG_PRINTLN (t);
-
+        
+        
         //matrix.setScrollMode (wrapForward);
         
 }
 
 unsigned long time_now =0;
 unsigned long time_now2 =0;
-int Delay = 1 * 1000; //Polling time for Stock
+int Delay = 1 * 1000; //Polling time for Stock (Stock API)
+int HrDelay = 1 *1000; //1Hr Delay (News API)
 
 void DoStocks() {
-  
   
   //Poll Stocks every Delay seconds.
   if (millis() > time_now + Delay) {  //First time in millis will enter loop, after that will delay 
@@ -113,10 +116,18 @@ void DoStocks() {
             Delay = 300 * 1000; //Change to 5 min after success.
           }
   }
+  
+  if (millis() > time_now + HrDelay) {  //First time in millis will enter loop, after that will delay 
+      if (getNews ("https://newsapi.org/v2/top-headlines?country=us&category=business&pageSize=20&apiKey=","dabccea193474ecbb178825d19fa52bf")) {
+          DEBUG_PRINTLN ("Got News");
+          HrDelay = 60*60*1000; //Set delay to 1hr
+      }
+  }
+  
   if (millis() > time_now2) { //Only scroll every 200ms
     time_now2 =millis()+200;
     matrix.fillRect (0,45,64,20, BLACK);
-    displayStockScroller();
+    displayStockScroller(strText);
   }
 }
 
@@ -129,8 +140,7 @@ int getStock (const char *stock_name, const char *stock_apikey) {
   strCall = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=" + String(stock_name) + "&interval=5min&apikey=" + String(stock_apikey);
  
 
-  
-  
+ 
   #define DISABLE_STOCK_FALSE //as API dead and need to test..
   #ifdef DISABLE_STOCK_FALSE
   
@@ -171,12 +181,6 @@ int getStock (const char *stock_name, const char *stock_apikey) {
        JsonObject stockQuote = doc ["Global Quote"];
 
        #endif
-       
-      // DEBUG_PRINTLN (String( stockQuote ["01. symbol"]));
-      // DEBUG_PRINTLN (String( stockQuote ["05. price"]));
-      // DEBUG_PRINTLN stockQuote ["09. change"]
-      // Save all the values to the stock struct.
-      //float flt = stockQuote ["05. price"].as<float>();
 
        //Update the values from JSON
        Stocks.stock_price = stockQuote ["05. price"].as<float>();
@@ -185,6 +189,7 @@ int getStock (const char *stock_name, const char *stock_apikey) {
        Stocks.stock_change_percent = stockQuote ["10. change percent"].as<float>();
       
        //Draw Stock Symbol
+       matrix.setFont(&Picopixel);
        matrix.clear();
        matrix.setTextColor  (WHITE);
        matrix.setCursor (2,15);
@@ -225,6 +230,7 @@ int getStock (const char *stock_name, const char *stock_apikey) {
        matrix.print ("%");
 
        //Draw Moon or Day Icon
+       //if market open show sun, else show moon.  need to add in ntpdate to get time 
        matrix.setCursor (48,2);
        matrix.drawIcon ( sunny_ico, 48, 2, 10, 5);
        return (true);
@@ -253,30 +259,69 @@ int getStock (const char *stock_name, const char *stock_apikey) {
   
 }
 
-/*
- #define BLACK    0x0000
-#define BLUE     0x001F
-#define RED      0xF800
-#define GREEN    0x07E0
-#define CYAN     0x07FF
-#define MAGENTA  0xF81F
-#define YELLOW   0xFFE0 
-#define WHITE    0xFFFF
-
-#define LED_RED_VERYLOW   (3 <<  11)
-#define LED_RED_LOW     (7 <<  11)
-#define LED_RED_MEDIUM    (15 << 11)
-#define LED_RED_HIGH    (31 << 11)
-
-#define LED_GREEN_VERYLOW (1 <<  5)   
-#define LED_GREEN_LOW     (15 << 5)  
-#define LED_GREEN_MEDIUM  (31 << 5)  
-#define LED_GREEN_HIGH    (63 << 5)  
-
-#define LED_BLUE_VERYLOW  3
-#define LED_BLUE_LOW    7
-#define LED_BLUE_MEDIUM   15
-#define LED_BLUE_HIGH     31
 
 
- */
+int getNews (const char *apiname, const char *apikey) {
+    String strCall;
+    int err=0;
+    //  strCall = "https://newsapi.org/v2/top-headlines?country=us&category=business&pageSize=10&apiKey=dabccea193474ecbb178825d19fa52bf" //limit to 10 
+    strCall = String (apiname) + String (apikey);
+    
+    //Lets setup a http client 
+    HTTPClient http;
+    
+    http.begin (strCall);
+    int httpCode = http.GET();
+
+ 
+    if (httpCode>0) {  //Success?
+       
+       DEBUG_PRINTLN();
+       DEBUG_PRINT ("HTTP CODE");   DEBUG_PRINT (httpCode);  DEBUG_PRINT (" STATUS "); DEBUG_PRINTLN(err);
+       DEBUG_PRINTLN (strCall);
+       delay (1000); //delay 1 seconds
+       
+       String payload = http.getString();
+       
+       //DEBUG_PRINT ("Payload ["); DEBUG_PRINT (payload); DEBUG_PRINTLN ("]");
+
+       //Got Payload?  Lets parse
+       const size_t capacity = JSON_ARRAY_SIZE(20) + 20*JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) + 20*JSON_OBJECT_SIZE(8) + 19420; //Need to up later?
+       DynamicJsonDocument doc(capacity);
+       
+       DeserializationError error= deserializeJson (doc, payload);
+       
+       if (error) { //Failed JSON
+          DEBUG_PRINTLN ("[HTTP] Json Parse Failed");
+          DEBUG_PRINTLN (error.c_str());
+          return (false);
+       }
+
+       int totalResults = doc["totalResults"];
+       
+       JsonArray results = doc ["articles"];
+       DEBUG_PRINTLN (totalResults);
+       if (totalResults>20) {
+          totalResults = 20;
+        };  //limit to 10
+
+       strText = " "; //Clear strText
+       for (int i=0; i< totalResults; i++) {
+           JsonObject article = results[i];
+           //DEBUG_PRINTLN ("[NEWS] "); 
+           //DEBUG_PRINT (i);
+           strText+= article ["description"].as<String>(); //For now don't concat 
+           strText+= " :: ";
+           //DEBUG_PRINT (" ");
+           //DEBUG_PRINTLN (strText);
+       }
+       DEBUG_PRINTLN ("[HTTP] Got News");
+       return (true);
+  }
+  else { //Failed HTTP
+    DEBUG_PRINTLN ("[HTTP] Failed to get News");
+    return (false);
+  }
+
+  
+}

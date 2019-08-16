@@ -30,8 +30,9 @@
  * SNEK 7 - Not implemented yet
  * COLOR_TEST 8 - Not implemented yet
  * STARFIELD 9 - Not implemented yet
- * STOCKS 10 - Not implemented yet
- * MAX_FX 11
+ * STOCKS 10 - Working +- non blocking.
+ * RINGS 11
+ * MAX_FX 12
  *
  *  Compile options 1M / 3M FATFS
  *  Stick img.ffat at  0x111000 - 
@@ -55,6 +56,7 @@
 #include <PubSubClient.h> //MQTT
 
 #include <Fonts/Picopixel.h> //Tiny font
+#include <Fonts/Org_01.h> //Serif Font
 //#include <JPEGDecoder.h>
 
 //GIF Functions (w/filesystem)
@@ -74,6 +76,7 @@
 #include "FilenameFunctions.h"
 
 //Crashy libraries, so ifdef'd out for now.
+//#define IR
 #ifdef IR
   #include <IRrecv.h>
   #include <IRutils.h>
@@ -353,7 +356,8 @@ int num_files;
 #define COLOR_TEST 8
 #define STARFIELD 9
 #define STOCKS 10
-#define MAX_FX 11
+#define RINGS 11
+#define MAX_FX 12
 
 
 int fx=10; //Hard code to stocks for testing.
@@ -1249,6 +1253,10 @@ void loop() {
         
       case STOCKS:
           DoStocks();
+          break;
+
+      case RINGS:
+          DoRings();
           break;
           
       default:
