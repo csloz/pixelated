@@ -360,7 +360,7 @@ int num_files;
 #define MAX_FX 12
 
 
-int fx=10; //Hard code to stocks for testing.
+int fx=STOCKS; //Hard code to stocks for testing.
 
 
 //******************************************************************************************************************
@@ -790,6 +790,15 @@ void setup() {
   //Setup Serial
   Serial.begin(115200);
 
+  
+  sprintdiv();
+  DEBUG_PRINT ("Heap: ");
+  DEBUG_PRINT (system_get_free_heap_size());
+  DEBUG_PRINTLN();
+//  DEBUG_PRINT ("VCC: ");
+//  DEBUG_PRINT (ESP.getVcc());
+//  DEBUG_PRINT (system_get_boot_version());
+  sprintdiv();
   
   //Default to standard palette
   currentPalette = RainbowColors_p;
