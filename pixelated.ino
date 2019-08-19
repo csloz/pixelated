@@ -19,6 +19,7 @@
  *  esp32/gif - Gif to Display - specific number of up / down  esp32/gif->0,esp32/gif->up, esp32/gif->down
  *  esp32/brightness - Change display Brightness 1=off, 2=lowest, 64 = max brightness [panel brightness max = panel rows]
  *  esp32/factoryreset - Reset EEPROM Settings to Default
+ *  esp32/stock - Set Stock Name to pull
  *
  * EFFECT LIST - Status
  * PLASMA 1 - Working non blocking
@@ -58,6 +59,7 @@
 #include <Fonts/Picopixel.h> //Tiny font
 #include <Fonts/Org_01.h> //Serif Font
 #include "Fonts/Serif_plain.h" //**LOCAL** Serif font customized
+#include "Fonts/Dialog.h"
 
 //#include <JPEGDecoder.h>
 
@@ -268,7 +270,7 @@ char *dstAbbrev;
 #define SHOWCLOCK 100
 uint16_t showClock = SHOWCLOCK;  
 time_t now;
-struct tm * timeinfo; 
+struct tm  timeinfo; 
 
 // Adjust according to your language
 const String WDAY_NAMES[] = {"SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"};
@@ -278,6 +280,10 @@ const String MONTH_NAMES[] = {"JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "
 //struct dstRule EndRule = {"CET", Last, Sun, Oct, 2, 0};       // Central European Time = UTC/GMT +1 hour
 #define UTC_OFFSET +8
 #define NTP_SERVERS "0.ch.pool.ntp.org", "1.ch.pool.ntp.org", "2.ch.pool.ntp.org"
+
+const char* ntpServer = "pool.ntp.org";
+const long  gmtOffset_sec = 8 * 3600 ; //8 hrs
+const int   daylightOffset_sec = 0; //no daylight savings
 
 
 //simpleDSTadjust dstAdjusted(StartRule, EndRule);
@@ -406,7 +412,7 @@ PubSubClient mqttclient(espClient);
 
 
 
-void DoStocks(); //defined elsewhere
+//void DoStocks(); //defined elsewhere
 void setup_conway(); //Defined elsewhere.
 
 void setup_sd() {
@@ -507,6 +513,24 @@ void setup_wifi() {
 }
 
 
+
+void setup_ntp(){
+    
+    configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+
+    if(!getLocalTime(&timeinfo)){
+     DEBUG_PRINTLN("Failed to obtain time");
+    return;
+  }
+    char timeStringBuff[50]; //50 chars should be enough
+    strftime(timeStringBuff, sizeof(timeStringBuff), "%A, %B %d %Y %H:%M:%S", &timeinfo);
+  
+    matrix.println (timeStringBuff);
+    DEBUG_PRINTLN (timeStringBuff);
+    
+}
+
+
 void setup_mqtt(){
  
   mqttclient.setServer(mqtt_server,1883);
@@ -569,7 +593,7 @@ void mqtt_callback(char* topic, byte* message, unsigned int length) {
   sprintdiv();
   DEBUG_PRINT("MQTT [Message arrived on topic: ");
   DEBUG_PRINT(topic);
-  DEBUG_PRINT("] Message [ ");
+  DEBUG_PRINT("] Message [");
   String messageValue;
 
   //Start Menu timer
@@ -664,6 +688,13 @@ void mqtt_callback(char* topic, byte* message, unsigned int length) {
     }
     //Clear screen as new effect will look funky otherwise
     matrix.fillScreen(BLACK);
+  }
+
+
+  if (String (topic) == "esp32/stock") {
+        DEBUG_PRINTLN ("[MQTT] Stock");
+        
+        setStock (messageValue.c_str() );  //convert to c string
   }
 
   
@@ -819,9 +850,14 @@ void setup() {
  
   
   setup_wifi();
+
+
   
   //Setup MQTT
   setup_mqtt();
+
+
+  setup_ntp();
 
   //Setup SD card
   //setup_sd();
@@ -1215,7 +1251,7 @@ void loop() {
         // matrix.flipDMABuffer();
         //FillNoise();
         //standardNoiseSmearing();
-        pong();
+       // pong();
       //  DoMenu();
        // matrix.showDMABuffer();
         break;
@@ -1287,10 +1323,11 @@ void loop() {
   }
 
  // Maybe move mqtt to 2nd cpu loop2?
- //Run mqtt check every 200ms
+ //Run mqtt check every 200 ticks
  if (myTime % 200) {
     //Poll MQTT
     mqttclient.loop();
+    
 
     //Abuse the boot button to clear flash and crash so we can redo config
     buttonState = digitalRead(0);

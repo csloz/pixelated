@@ -74,7 +74,7 @@ void displayStockScroller(const String &strText){
      const int width=18;
      
       //Show scroller at bottom 48
-      matrix.setFont(&Serif_plain_7);
+      matrix.setFont(&Dialog_plain);
       matrix.setTextSize (1);
       matrix.setTextColor(WHITE);
       matrix.setTextWrap (false);
@@ -82,6 +82,8 @@ void displayStockScroller(const String &strText){
 
         offset++;
 
+      //Smooth scrolling, do pixel move for each char, then shift..
+      
         if (offset < strText.length()) {
             //Have text to pump into the blitter?
             for (int i=0; i < width; i++)
@@ -93,11 +95,22 @@ void displayStockScroller(const String &strText){
              for (int i=0; i < width; i++)
                 t+= strText.charAt((offset +i) % strText.length()); 
         }
-        matrix.setCursor (0,50);
+        matrix.setCursor (0,55);
         matrix.print ( t );
         
-        
-        //matrix.setScrollMode (wrapForward);
+
+
+     /*   for (int x=64, i=0; ; x--l) {
+          
+          for (int x2=x, i2=i; x2<64) {
+           int8_t w = Font::Draw (test[i2], x2, 0);
+           x2 += w, i2 = (i2+1) % strlen(test);
+           if (x2 <= 0)  // off the display completely?
+             x = x2, i = i2;
+           }
+           delay(500);
+        }
+        //matrix.setScrollMode (wrapForward);*/
         
 }
 
@@ -111,8 +124,14 @@ void DoStocks() {
   //Poll Stocks every Delay seconds.
   if (millis() > time_now + Delay) {  //First time in millis will enter loop, after that will delay 
           time_now=millis();
-          if (getStock("TSLA", "84CN3AUMFGSI2U6K")) {
-            DEBUG_PRINTLN ("GOT STOCK");
+          DEBUG_PRINTLN();
+          DEBUG_PRINT ("DoStocksPre[");
+          DEBUG_PRINT (Stocks.stock_symbol );
+          DEBUG_PRINTLN ("]");
+          if (getStock("TSLA", "84CN3AUMFGSI2U6K")) { 
+            DEBUG_PRINT ("DO STOCKS POST [");
+            DEBUG_PRINT (Stocks.stock_symbol);
+            DEBUG_PRINTLN ("]");
             Delay = 300 * 1000; //Change to 5 min after success.
           }
   }
@@ -124,22 +143,52 @@ void DoStocks() {
       }
   }
   
-  if (millis() > time_now2) { //Only scroll every 200ms
-    time_now2 =millis()+200;
+  if (millis() > time_now2) { //Only scroll every 300ms
+    time_now2 =millis()+300;
     matrix.fillRect (0,45,64,20, BLACK);
     displayStockScroller(strText);
   }
+  
 }
 
 
+void setStock (const char *stock_symbol) {
 
-int getStock (const char *stock_name, const char *stock_apikey) {
+      DEBUG_PRINT ("SET STOCK [");
+       DEBUG_PRINT (Stocks.stock_symbol);
+       DEBUG_PRINTLN ("]");
+       DEBUG_PRINT (".");
+       size_t Size = strlen(stock_symbol);
+       DEBUG_PRINT (Size);
+       DEBUG_PRINT (".");
+       //Stocks.stock_symbol = malloc(Size);
+       DEBUG_PRINT (".");
+       //strcpy (Stocks.stock_symbol , stock_symbol);
+       DEBUG_PRINT (".");
+       
+       Delay = 1*1000; //reset delay
+       
+}
+
+
+int getStock (const char * stock_symbol,const char *stock_apikey) {
   String strCall;
   int err=0;
-//  strCall = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=TSLA&interval=5min&apikey=8 4CN 3AU MFG SI2 U6K"
-  strCall = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=" + String(stock_name) + "&interval=5min&apikey=" + String(stock_apikey);
- 
 
+  DEBUG_PRINTLN ();
+  DEBUG_PRINT ("Get Stock [");
+  DEBUG_PRINT (Stocks.stock_symbol);
+  DEBUG_PRINTLN ("]");
+
+  
+  //return(true);
+  
+//  strCall = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=TSLA&interval=5min&apikey=8 4CN 3AU MFG SI2 U6K"
+  strCall = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=" + String(stock_symbol) + "&interval=5min&apikey=" + String(stock_apikey);
+ 
+  DEBUG_PRINTLN (strCall);
+
+ // return(true);
  
   #define DISABLE_STOCK_FALSE //as API dead and need to test..
   #ifdef DISABLE_STOCK_FALSE

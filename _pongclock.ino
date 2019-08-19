@@ -1,3 +1,6 @@
+/*
+
+
 //Draw number n, with x,y as top left corner, in chosen color, scaled in x and y.
 //when scale_x, scale_y = 1 then character is 3x5
 void vectorNumber(int n, int x, int y, int color, float scale_x, float scale_y){
@@ -96,19 +99,19 @@ void pong(){
     cls();
     //draw pitch centre line
     int adjust = 0;
-    if(timeinfo->tm_sec%2==0)adjust=1;
+//    if(timeinfo->tm_sec%2==0)adjust=1;
     for (byte i = 0; i < (Y_MAX+1); i++) {
       if ( i % 2 == 0 ) { //plot point if an even number
         matrix.drawPixel((X_MAX+1)/2,i+adjust,matrix.Color333(0,4,0));
       }
-    }
+ //   }
 
    
    
     int ampm=0;
     //update score / time
-    byte mins =  timeinfo->tm_min;   
-    byte hours = timeinfo->tm_hour;
+ //   byte mins =  timeinfo->tm_min;   
+//    byte hours = timeinfo->tm_hour;
     if (hours > 12) {
       hours = hours - ampm * 12;
     }
@@ -162,13 +165,13 @@ void pong(){
     }
 
     //if coming up to the minute: secs = 59 and mins < 59, flag bat 2 (right side) to miss the return so we inc the minutes score
-    if (timeinfo->tm_sec == 59 && timeinfo->tm_min < 59){
-      bat1miss = 1;
-    }
+  //  if (timeinfo->tm_sec == 59 && timeinfo->tm_min < 59){
+  //    bat1miss = 1;
+  //  }
     // if coming up to the hour: secs = 59  and mins = 59, flag bat 1 (left side) to miss the return, so we inc the hours score.
-    if (timeinfo->tm_sec == 59 && timeinfo->tm_min == 59){
-      bat2miss = 1;
-    }
+   /// if (timeinfo->tm_sec == 59 && timeinfo->tm_min == 59){
+   //   bat2miss = 1;
+   // }
 
     //AI - we run 2 sets of 'AI' for each bat to work out where to go to hit the ball back
     //very basic AI...
@@ -416,3 +419,5 @@ byte pong_get_ball_endpoint(float tempballpos_x, float  tempballpos_y, float  te
   }
   return tempballpos_y;
 }
+
+*/
