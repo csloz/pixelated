@@ -49,7 +49,7 @@ int sunny_ico [50] = {
 
 
 struct stock {
-  const char* stock_symbol =  "TSLA";
+  char stock_symbol[10]="TSLA";
   float stock_open =  232.9900;
   float stock_high = 235.7700;
   float stock_low = 228.7500;
@@ -128,7 +128,7 @@ void DoStocks() {
           DEBUG_PRINT ("DoStocksPre[");
           DEBUG_PRINT (Stocks.stock_symbol );
           DEBUG_PRINTLN ("]");
-          if (getStock("TSLA", "84CN3AUMFGSI2U6K")) { 
+          if (getStock(Stocks.stock_symbol, "84CN3AUMFGSI2U6K")) { 
             DEBUG_PRINT ("DO STOCKS POST [");
             DEBUG_PRINT (Stocks.stock_symbol);
             DEBUG_PRINTLN ("]");
@@ -136,13 +136,13 @@ void DoStocks() {
           }
   }
   
-  if (millis() > time_now + HrDelay) {  //First time in millis will enter loop, after that will delay 
+  /*if (millis() > time_now + HrDelay) {  //First time in millis will enter loop, after that will delay 
       if (getNews ("https://newsapi.org/v2/top-headlines?country=us&category=business&pageSize=20&apiKey=","dabccea193474ecbb178825d19fa52bf")) {
           DEBUG_PRINTLN ("Got News");
           HrDelay = 60*60*1000; //Set delay to 1hr
       }
   }
-  
+  */
   if (millis() > time_now2) { //Only scroll every 300ms
     time_now2 =millis()+300;
     matrix.fillRect (0,45,64,20, BLACK);
@@ -163,7 +163,7 @@ void setStock (const char *stock_symbol) {
        DEBUG_PRINT (".");
        //Stocks.stock_symbol = malloc(Size);
        DEBUG_PRINT (".");
-       //strcpy (Stocks.stock_symbol , stock_symbol);
+       strcpy (Stocks.stock_symbol , stock_symbol);
        DEBUG_PRINT (".");
        
        Delay = 1*1000; //reset delay
@@ -230,13 +230,23 @@ int getStock (const char * stock_symbol,const char *stock_apikey) {
        JsonObject stockQuote = doc ["Global Quote"];
 
        #endif
+       
+       if (stockQuote.isNull() ) { //Failure?
 
-       //Update the values from JSON
-       Stocks.stock_price = stockQuote ["05. price"].as<float>();
-       Stocks.stock_symbol = stockQuote ["01. symbol"];
-       Stocks.stock_change = stockQuote ["09. change"].as<float>();
-       Stocks.stock_change_percent = stockQuote ["10. change percent"].as<float>();
-      
+         DEBUG_PRINTLN ("[HTTP] Json Object Failure");
+         DEBUG_PRINTLN (error.c_str());
+         return( false);
+         
+       }
+       else {   //Success Update the values from JSON
+         Stocks.stock_price = stockQuote ["05. price"].as<float>();
+         
+         strcpy (Stocks.stock_symbol , stockQuote ["01. symbol"]);
+  
+         Stocks.stock_change = stockQuote ["09. change"].as<float>();
+         Stocks.stock_change_percent = stockQuote ["10. change percent"].as<float>();
+       }
+       
        //Draw Stock Symbol
        matrix.setFont(&Picopixel);
        matrix.clear();

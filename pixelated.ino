@@ -35,7 +35,7 @@
  * RINGS 11
  * MAX_FX 12
  *
- *  Compile options 1M / 3M FATFS
+ *  Compile options 2M / 2M FATFS
  *  Stick img.ffat at  0x111000 - 
  *  esptool.py --chip esp32  --baud 921600 write_flash  0x111000 img.ffat
 */
@@ -818,6 +818,14 @@ void SaveEEPROM() {
     
 }
 
+uint32_t getChipIP(){
+
+// uint32_t chipID;
+ uint64_t macAddress = ESP.getEfuseMac();
+ uint64_t macAddressTrunc = macAddress << 40;
+ return( macAddressTrunc >> 40);
+}
+
 
 void setup() {
   //Setup Serial
@@ -832,7 +840,12 @@ void setup() {
 //  DEBUG_PRINT (ESP.getVcc());
 //  DEBUG_PRINT (system_get_boot_version());
   sprintdiv();
-  
+
+  DEBUG_PRINT  ("CHIP ID");
+  DEBUG_PRINTLN (getChipIP());
+ 
+  sprintdiv();
+    
   //Default to standard palette
   currentPalette = RainbowColors_p;
   myPalette = 1;
