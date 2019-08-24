@@ -46,7 +46,10 @@
 #include <FS.h>
 
 #include <ESP32-RGB64x32MatrixPanel-I2S-DMA.h> //https://github.com/mrfaptastic/ESP32-RGB64x32MatrixPanel-I2S-DMA
+
+#define FASTLED_INTERNAL //Disable PRAGMA warnings in FastLED library
 #include <FastLED.h> //Fast LED library for LED effects
+
 #include <Adafruit_GFX.h> //Ada Graphics library
 //#include <WiFi.h> //Wifi
 #include <DNSServer.h>
@@ -818,7 +821,7 @@ void SaveEEPROM() {
     
 }
 
-uint32_t getChipIP(){
+uint32_t getChipID(){
 
 // uint32_t chipID;
  uint64_t macAddress = ESP.getEfuseMac();
@@ -841,8 +844,8 @@ void setup() {
 //  DEBUG_PRINT (system_get_boot_version());
   sprintdiv();
 
-  DEBUG_PRINT  ("CHIP ID");
-  DEBUG_PRINTLN (getChipIP());
+  DEBUG_PRINT  ("CHIP ID: ");
+  DEBUG_PRINTLN (getChipID());
  
   sprintdiv();
     

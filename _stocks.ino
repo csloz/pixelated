@@ -49,7 +49,7 @@ int sunny_ico [50] = {
 
 
 struct stock {
-  char stock_symbol[10]="TSLA";
+  char stock_symbol[10]="TSLA";  //Default to TESLA as I own stock ;)
   float stock_open =  232.9900;
   float stock_high = 235.7700;
   float stock_low = 228.7500;
