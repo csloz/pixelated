@@ -47,7 +47,7 @@
 
 #include <ESP32-RGB64x32MatrixPanel-I2S-DMA.h> //https://github.com/mrfaptastic/ESP32-RGB64x32MatrixPanel-I2S-DMA
 
-#define FASTLED_INTERNAL //Disable PRAGMA warnings in FastLED library
+#define FASTLED_INTERNAL //Disable (SPI) PRAGMA warnings in FastLED library
 #include <FastLED.h> //Fast LED library for LED effects
 
 #include <Adafruit_GFX.h> //Ada Graphics library

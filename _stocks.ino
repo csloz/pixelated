@@ -26,6 +26,10 @@
 https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=TSLA&interval=5min&apikey=84CN3AUMFGSI2U6K
 
 
+//PMI Shanghai
+
+https://api.waqi.info/feed/shanghai/?token=278124ab53afb94ed8ee2ce141e710dc5ae47526
+
 
 */
 
@@ -171,6 +175,48 @@ void setStock (const char *stock_symbol) {
 }
 
 
+int getPM25() {
+
+    String strCall = "https://api.waqi.info/feed/shanghai/?token=278124ab53afb94ed8ee2ce141e710dc5ae47526";
+    HTTPClient http;
+    
+    http.begin (strCall);
+    int httpCode = http.GET();
+    if (httpCode>0) {
+      String payload = http.getString();
+      const size_t capacity = JSON_ARRAY_SIZE(2) + JSON_ARRAY_SIZE(4) + 11*JSON_OBJECT_SIZE(1) + 5*JSON_OBJECT_SIZE(2) + 2*JSON_OBJECT_SIZE(3) + JSON_OBJECT_SIZE(8) + JSON_OBJECT_SIZE(10) + 750;
+      
+      
+      DynamicJsonDocument doc(capacity);
+         
+      DeserializationError error= deserializeJson (doc, payload);
+      if (error) { //Failed JSON
+          DEBUG_PRINTLN ("[HTTP] Json Parse Failed");
+          DEBUG_PRINTLN (error.c_str());
+          return (false);
+       }
+
+     
+       JsonObject aqi = doc["data"];
+
+       if (aqi.isNull() ) { //Failure?
+
+         DEBUG_PRINTLN ("[HTTP] Json Object Failure");
+         DEBUG_PRINTLN (error.c_str());
+         return( false);
+         
+       }
+       else {  
+          sprintdiv();
+          DEBUG_PRINT ("PM25=");
+          int data_aqi = aqi["aqi"]; 
+          DEBUG_PRINTLN (data_aqi);
+          sprintdiv();
+          return (data_aqi); // 59  
+       }
+    }
+}
+
 int getStock (const char * stock_symbol,const char *stock_apikey) {
   String strCall;
   int err=0;
@@ -292,6 +338,12 @@ int getStock (const char * stock_symbol,const char *stock_apikey) {
        //if market open show sun, else show moon.  need to add in ntpdate to get time 
        matrix.setCursor (48,2);
        matrix.drawIcon ( sunny_ico, 48, 2, 10, 5);
+
+       matrix.setCursor (36, 12);
+       //need to do a better revision pm25 call
+       matrix.print ("AQI[");
+       matrix.print (getPM25());
+       matrix.print ("]");
        return (true);
   }
   else { //Failed HTTP
