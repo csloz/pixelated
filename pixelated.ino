@@ -314,6 +314,8 @@ int num_files;
 #define RED      0xF800
 #define GREEN    0x07E0
 #define CYAN     0x07FF
+#define ORANGE   0xFF9933
+#define PURPLE   0x660099
 #define MAGENTA  0xF81F
 #define YELLOW   0xFFE0 
 #define WHITE    0xFFFF

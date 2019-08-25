@@ -342,7 +342,15 @@ int getStock (const char * stock_symbol,const char *stock_apikey) {
        matrix.setCursor (36, 12);
        //need to do a better revision pm25 call
        matrix.print ("AQI[");
-       matrix.print (getPM25());
+       int pm = getPM25();
+       if (pm <51) {matrix.setTextColor  (GREEN);}
+       if (pm >50 && pm <101) {matrix.setTextColor (YELLOW);}
+       if (pm >100 && pm <151) {matrix.setTextColor (ORANGE);}
+       if (pm >150 && pm < 201) {matrix.setTextColor (RED);}
+       if (pm >200 && pm < 301) {matrix.setTextColor (PURPLE);}
+       if (pm >301) {matrix.setTextColor (MAGENTA);}
+       matrix.print (pm);
+       matrix.setTextColor (WHITE);
        matrix.print ("]");
        return (true);
   }
