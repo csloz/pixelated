@@ -140,13 +140,13 @@ void DoStocks() {
           }
   }
   
-  /*if (millis() > time_now + HrDelay) {  //First time in millis will enter loop, after that will delay 
+  if (millis() > time_now + HrDelay) {  //First time in millis will enter loop, after that will delay 
       if (getNews ("https://newsapi.org/v2/top-headlines?country=us&category=business&pageSize=20&apiKey=","dabccea193474ecbb178825d19fa52bf")) {
           DEBUG_PRINTLN ("Got News");
           HrDelay = 60*60*1000; //Set delay to 1hr
       }
   }
-  */
+  
   if (millis() > time_now2) { //Only scroll every 300ms
     time_now2 =millis()+300;
     matrix.fillRect (0,45,64,20, BLACK);
