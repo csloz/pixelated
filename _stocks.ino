@@ -59,13 +59,26 @@ struct stock {
   float stock_low = 228.7500;
   float stock_price =  235.00;
   long stock_volume =  4663937;
-  const char* stock_latest_trading_day = "2019-08-12";
+  char stock_latest_trading_day[12] = "2019-08-12";
   float stock_previous_close =  235.0100;
   float stock_change =  5.99;
   float stock_change_percent = 2.62;
 };
 
+struct weather {
+  int aqi = 0;
+};
+
+struct delays {
+  int five_min = 60 * 5 * 1000;
+  int one_hour = 60 * 60 * 1000;
+  int thm = 300;
+};
+
 stock Stocks;
+weather Weather;
+delays Delays;
+
 
 int currentCursor = COLUMNS;
 int offset =COLUMNS;
@@ -175,10 +188,11 @@ void setStock (const char *stock_symbol) {
 }
 
 
-int getPM25() {
+boolean getPM25() {
 
     String strCall = "https://api.waqi.info/feed/shanghai/?token=278124ab53afb94ed8ee2ce141e710dc5ae47526";
     HTTPClient http;
+    DEBUG_PRINTLN ("[HTTP] IN PM25");
     
     http.begin (strCall);
     int httpCode = http.GET();
@@ -186,7 +200,7 @@ int getPM25() {
       String payload = http.getString();
       const size_t capacity = JSON_ARRAY_SIZE(2) + JSON_ARRAY_SIZE(4) + 11*JSON_OBJECT_SIZE(1) + 5*JSON_OBJECT_SIZE(2) + 2*JSON_OBJECT_SIZE(3) + JSON_OBJECT_SIZE(8) + JSON_OBJECT_SIZE(10) + 750;
       
-      
+      DEBUG_PRINTLN ("[HTTP] in PM25 after HTTP GET");
       DynamicJsonDocument doc(capacity);
          
       DeserializationError error= deserializeJson (doc, payload);
@@ -203,18 +217,19 @@ int getPM25() {
 
          DEBUG_PRINTLN ("[HTTP] Json Object Failure");
          DEBUG_PRINTLN (error.c_str());
-         return( false);
+         return(false);
          
        }
        else {  
-          sprintdiv();
-          DEBUG_PRINT ("PM25=");
           int data_aqi = aqi["aqi"]; 
-          DEBUG_PRINTLN (data_aqi);
-          sprintdiv();
-          return (data_aqi); // 59  
+          Weather.aqi =  data_aqi; // 59  
+          return(true);
        }
     }
+
+    //How are we here?
+    Weather.aqi= 0;
+    return (false);
 }
 
 int getStock (const char * stock_symbol,const char *stock_apikey) {
@@ -334,24 +349,31 @@ int getStock (const char * stock_symbol,const char *stock_apikey) {
        matrix.print ( Stocks.stock_change_percent,2);
        matrix.print ("%");
 
+       //********************************  Day or Night *********************************
        //Draw Moon or Day Icon
        //if market open show sun, else show moon.  need to add in ntpdate to get time 
        matrix.setCursor (48,2);
        matrix.drawIcon ( sunny_ico, 48, 2, 10, 5);
 
-       matrix.setCursor (36, 12);
-       //need to do a better revision pm25 call
-       matrix.print ("AQI[");
-       int pm = getPM25();
-       if (pm <51) {matrix.setTextColor  (GREEN);}
-       if (pm >50 && pm <101) {matrix.setTextColor (YELLOW);}
-       if (pm >100 && pm <151) {matrix.setTextColor (ORANGE);}
-       if (pm >150 && pm < 201) {matrix.setTextColor (RED);}
-       if (pm >200 && pm < 301) {matrix.setTextColor (PURPLE);}
-       if (pm >301) {matrix.setTextColor (MAGENTA);}
-       matrix.print (pm);
-       matrix.setTextColor (WHITE);
-       matrix.print ("]");
+      //************************************ AQI ****************************************
+       if (getPM25()){
+         matrix.setCursor (36, 12);
+         matrix.print ("AQI[");
+         if (Weather.aqi <51) {matrix.setTextColor  (GREEN);}
+         if (Weather.aqi >50 && Weather.aqi <101) {matrix.setTextColor (YELLOW);}
+         if (Weather.aqi >100 && Weather.aqi <151) {matrix.setTextColor (ORANGE);}
+         if (Weather.aqi >150 && Weather.aqi < 201) {matrix.setTextColor (RED);}
+         if (Weather.aqi >200 && Weather.aqi < 301) {matrix.setTextColor (PURPLE);}
+         if (Weather.aqi >301) {matrix.setTextColor (MAGENTA);}
+       
+          matrix.print (Weather.aqi);
+          matrix.setTextColor (WHITE);
+          matrix.print ("]");
+       }
+       else {
+          DEBUG_PRINTLN ("[PM25] Failed to get value");
+       }
+       
        return (true);
   }
   else { //Failed HTTP
