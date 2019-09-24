@@ -53,7 +53,7 @@ int sunny_ico [50] = {
 
 
 struct stock {
-  char stock_symbol[10]="ARR";  //Default to TESLA as I own stock ;)
+  char stock_symbol[10]="DIS";  //Default to TESLA as I own stock ;)
   float stock_open =  232.9900;
   float stock_high = 235.7700;
   float stock_low = 228.7500;
@@ -63,9 +63,12 @@ struct stock {
   float stock_previous_close =  235.0100;
   float stock_change =  5.99;
   float stock_change_percent = 2.62;
+  int pm25;
 };
 
 stock Stocks;
+
+
 
 int currentCursor = COLUMNS;
 int offset =COLUMNS;
@@ -118,16 +121,24 @@ void displayStockScroller(const String &strText){
         
 }
 
-unsigned long time_now =0;
-unsigned long time_now2 =0;
-int Delay = 1 * 1000; //Polling time for Stock (Stock API)
-int HrDelay = 1 *1000; //1Hr Delay (News API)
+
+//Setup delay struct
+struct mydelay {
+unsigned long scrollDelay = 0;
+unsigned long stockDelay = 0;
+unsigned long newsDelay = 0;
+unsigned long timenowStock =0;
+unsigned long timenowNews =0;
+};
+
+mydelay myDelay;
+
 
 void DoStocks() {
   
   //Poll Stocks every Delay seconds.
-  if (millis() > time_now + Delay) {  //First time in millis will enter loop, after that will delay 
-          time_now=millis();
+  if (millis() > myDelay.timenowStock + myDelay.stockDelay) {  //First time in millis will enter loop, after that will delay 
+          myDelay.timenowStock=millis();
           DEBUG_PRINTLN();
           DEBUG_PRINT ("DoStocksPre[");
           DEBUG_PRINT (Stocks.stock_symbol );
@@ -136,19 +147,36 @@ void DoStocks() {
             DEBUG_PRINT ("DO STOCKS POST [");
             DEBUG_PRINT (Stocks.stock_symbol);
             DEBUG_PRINTLN ("]");
-            Delay = 300 * 1000; //Change to 5 min after success.
+            myDelay.stockDelay= 300 * 1000; //Change to 5 min after success.
+            //TODO
+            //Check time if time <> open time then set delay to 9:30am
+           
+            
           }
   }
   
-  if (millis() > time_now + HrDelay) {  //First time in millis will enter loop, after that will delay 
+  if (millis() > myDelay.timenowNews + myDelay.newsDelay) {  //First time in millis will enter loop, after that will delay 
       if (getNews ("https://newsapi.org/v2/top-headlines?country=us&category=business&pageSize=20&apiKey=","dabccea193474ecbb178825d19fa52bf")) {
           DEBUG_PRINTLN ("Got News");
-          HrDelay = 60*60*1000; //Set delay to 1hr
+
+          int pm = getPM25(); //Try once an hour.
+          if (pm) {
+              Stocks.pm25 = pm;
+          }
+          else {
+              Stocks.pm25 = -1;
+          }
+          
+          myDelay.newsDelay = 60*60*1000; //Set delay to 1hr
+          myDelay.timenowNews= millis(); //Set current news time for loop delay
+      } 
+      else {
+          DEBUG_PRINTLN ("[STOCK NEWS] FAILED");
       }
   }
   
-  if (millis() > time_now2) { //Only scroll every 300ms
-    time_now2 =millis()+300;
+  if (millis() > myDelay.scrollDelay) { //Only scroll every 300ms unless first run
+    myDelay.scrollDelay = millis()+300; //Long
     matrix.fillRect (0,45,64,20, BLACK);
     displayStockScroller(strText);
   }
@@ -156,9 +184,9 @@ void DoStocks() {
 }
 
 
-void setStock (const char *stock_symbol) {
-
-      DEBUG_PRINT ("SET STOCK [");
+void setStock(const char *stock_symbol) {
+       
+       DEBUG_PRINT ("SET STOCK [");
        DEBUG_PRINT (Stocks.stock_symbol);
        DEBUG_PRINTLN ("]");
        DEBUG_PRINT (".");
@@ -170,7 +198,9 @@ void setStock (const char *stock_symbol) {
        strcpy (Stocks.stock_symbol , stock_symbol);
        DEBUG_PRINT (".");
        
-       Delay = 1*1000; //reset delay
+       //reset Stock delay to 0 so it will pull next loop
+       myDelay.timenowStock=millis();
+       myDelay.stockDelay = 1*1000; 
        
 }
 
@@ -220,6 +250,8 @@ int getPM25() {
     }
 
     http.end();
+    DEBUG_PRINTLN ("[HTTP] PM25 AT END? SO JSON Parsse Passed, Json Object Passsed, but somehow no data..");
+    return (false); //Shouldn't be here, so something broke.
 }
 
 
@@ -355,17 +387,22 @@ int getStock (const char * stock_symbol,const char *stock_apikey) {
 
        matrix.setCursor (36, 12);
        //need to do a better revision pm25 call
-       matrix.print ("AQI[");
-       int pm = getPM25();
-       if (pm <51) {matrix.setTextColor  (GREEN);}
-       if (pm >50 && pm <101) {matrix.setTextColor (YELLOW);}
-       if (pm >100 && pm <151) {matrix.setTextColor (ORANGE);}
-       if (pm >150 && pm < 201) {matrix.setTextColor (RED);}
-       if (pm >200 && pm < 301) {matrix.setTextColor (PURPLE);}
-       if (pm >301) {matrix.setTextColor (MAGENTA);}
-       matrix.print (pm);
-       matrix.setTextColor (WHITE);
-       matrix.print ("]");
+       
+       
+       if (Stocks.pm25) { //We haz valid result
+            matrix.print ("AQI[");
+            //Set text color for horrendous AQI value in #city 
+           if (Stocks.pm25 <51) {matrix.setTextColor  (GREEN);}
+           if (Stocks.pm25 >50 && Stocks.pm25 <101) {matrix.setTextColor (YELLOW);}
+           if (Stocks.pm25 >100 && Stocks.pm25 <151) {matrix.setTextColor (ORANGE);}
+           if (Stocks.pm25 >150 && Stocks.pm25 < 201) {matrix.setTextColor (RED);}
+           if (Stocks.pm25 >200 && Stocks.pm25 < 301) {matrix.setTextColor (PURPLE);}
+           if (Stocks.pm25 >301) {matrix.setTextColor (MAGENTA);}
+           matrix.print (Stocks.pm25);
+           matrix.setTextColor (WHITE);
+           matrix.print ("]");
+       }
+       
 
        http.end();
        return (true);
@@ -376,7 +413,7 @@ int getStock (const char * stock_symbol,const char *stock_apikey) {
     return (false);
   }
 
-   //Here, so HTTP get and Parse must have worked!
+   //Here, so something b0rked.
    http.end();
   /*const char* stock_symbol = jsonBuffer["01. symbol"]; // "TSLA"
   const char* stock_open = root["02. open"]; // "232.9900"
@@ -415,7 +452,7 @@ int getNews (const char *apiname, const char *apikey) {
        DEBUG_PRINTLN();
        DEBUG_PRINT ("HTTP CODE");   DEBUG_PRINT (httpCode);  DEBUG_PRINT (" STATUS "); DEBUG_PRINTLN(err);
        DEBUG_PRINTLN (strCall);
-       delay (1000); //delay 1 seconds
+       //delay (1000); //delay 1 seconds
        
        String payload = http.getString();
        

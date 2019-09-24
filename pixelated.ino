@@ -372,9 +372,7 @@ int num_files;
 #define RINGS 11
 #define MAX_FX 12
 
-
-int fx=STOCKS; //Hard code to stocks for testing.
-
+int fx;
 
 //******************************************************************************************************************
 
@@ -384,7 +382,7 @@ bool SHOWMENU=false;  //MENU
 boolean screenPowered=true;  //Screen defaults to on
 
 int myPalette=1; //RGB full color
-int myTime=0; 
+unsigned long myTime=0; 
 int cycles=0;
 
 //Snake Vars
@@ -560,6 +558,8 @@ void setup_ntp(){
   
     matrix.println (timeStringBuff);
     DEBUG_PRINTLN (timeStringBuff);
+
+
     
 }
 
@@ -728,6 +728,7 @@ void mqtt_callback(char* topic, byte* message, unsigned int length) {
         DEBUG_PRINTLN ("[MQTT] Stock");
         
         setStock (messageValue.c_str() );  //convert to c string
+        fx = STOCKS; //Set fx to stock for next screen update loop.
   }
 
   
@@ -1266,6 +1267,9 @@ void  pollIR (){
 
 int buttonState;
 
+
+
+
 void loop() {
   /*
 #define PLASMA 1
@@ -1369,11 +1373,23 @@ void loop() {
       modeSwitch = millis();
       DEBUG_PRINT ("Switch mode to ");
       DEBUG_PRINTLN (fx);
+      //Poll Wifi?
+
+      //Housekeeping - keep stuff connecting if failed
+      if (WiFi.status() != WL_CONNECTED) {
+          DEBUG_PRINTLN ("[WIFI] Not connected in 5 min loop, retrying");
+          WiFi.begin (pixelated_config.WIFI_SSID, pixelated_config.WIFI_PASS);  //Try reconnect to wifi if down
+      }
+      if (!mqttclient.connected()) {
+          sprintdiv();
+          DEBUG_PRINTLN ("[MQTT] Disconnected retrying");
+          setup_mqtt();
+      }
   }
 
  // Maybe move mqtt to 2nd cpu loop2?
  //Run mqtt check every 200 ticks
- if (myTime % 200) {
+ if (millis() - myTime > 200) { //mytime =0, enters as > 200, next loop mytime delays for 200ms
     //Poll MQTT
     mqttclient.loop();
     
@@ -1387,13 +1403,15 @@ void loop() {
       esp_restart();
       
     }
-    
+
+    myTime = millis();
     //Poll IR
     #ifdef IR
     pollIR();
     #endif
+    
  }
- myTime++;   
+  
 
  
 
