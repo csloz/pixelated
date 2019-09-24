@@ -69,6 +69,12 @@ struct stock {
 stock Stocks;
 
 
+struct weather {
+  int aqi = 0;
+};
+
+weather Weather;
+
 
 int currentCursor = COLUMNS;
 int offset =COLUMNS;
@@ -161,10 +167,10 @@ void DoStocks() {
 
           int pm = getPM25(); //Try once an hour.
           if (pm) {
-              Stocks.pm25 = pm;
+              Weather.aqi = pm;
           }
           else {
-              Stocks.pm25 = -1;
+              Weather.aqi= false;
           }
           
           myDelay.newsDelay = 60*60*1000; //Set delay to 1hr
@@ -209,6 +215,8 @@ int getPM25() {
 
     String strCall = "https://api.waqi.info/feed/shanghai/?token=278124ab53afb94ed8ee2ce141e710dc5ae47526";
     HTTPClient http;
+    DEBUG_PRINTLN ("[HTTP] IN PM25");
+    http.setTimeout(2000); //2 second timeout as this sometime hangs...
     
     http.begin (strCall, root_ca);
     int httpCode = http.GET();
@@ -216,7 +224,7 @@ int getPM25() {
       String payload = http.getString();
       const size_t capacity = JSON_ARRAY_SIZE(2) + JSON_ARRAY_SIZE(4) + 11*JSON_OBJECT_SIZE(1) + 5*JSON_OBJECT_SIZE(2) + 2*JSON_OBJECT_SIZE(3) + JSON_OBJECT_SIZE(8) + JSON_OBJECT_SIZE(10) + 750;
       
-      
+      DEBUG_PRINTLN ("[HTTP] in PM25 after HTTP GET");
       DynamicJsonDocument doc(capacity);
          
       DeserializationError error= deserializeJson (doc, payload);
@@ -245,12 +253,14 @@ int getPM25() {
           DEBUG_PRINTLN (data_aqi);
           sprintdiv();
           http.end();
+          Weather.aqi =  data_aqi; // 59  
           return (data_aqi); // 59  
        }
     }
 
     http.end();
     DEBUG_PRINTLN ("[HTTP] PM25 AT END? SO JSON Parsse Passed, Json Object Passsed, but somehow no data..");
+    Weather.aqi =  0; // 59  
     return (false); //Shouldn't be here, so something broke.
 }
 
@@ -379,7 +389,8 @@ int getStock (const char * stock_symbol,const char *stock_apikey) {
        matrix.setCursor (32,40);
        matrix.print ( Stocks.stock_change_percent,2);
        matrix.print ("%");
-
+       
+       //********************************  Day or Night *********************************
        //Draw Moon or Day Icon
        //if market open show sun, else show moon.  need to add in ntpdate to get time 
        matrix.setCursor (48,2);
@@ -388,22 +399,21 @@ int getStock (const char * stock_symbol,const char *stock_apikey) {
        matrix.setCursor (36, 12);
        //need to do a better revision pm25 call
        
-       
-       if (Stocks.pm25) { //We haz valid result
+       //************************************ AQI ****************************************
+       if (Weather.aqi) { //We haz valid result
             matrix.print ("AQI[");
             //Set text color for horrendous AQI value in #city 
-           if (Stocks.pm25 <51) {matrix.setTextColor  (GREEN);}
-           if (Stocks.pm25 >50 && Stocks.pm25 <101) {matrix.setTextColor (YELLOW);}
-           if (Stocks.pm25 >100 && Stocks.pm25 <151) {matrix.setTextColor (ORANGE);}
-           if (Stocks.pm25 >150 && Stocks.pm25 < 201) {matrix.setTextColor (RED);}
-           if (Stocks.pm25 >200 && Stocks.pm25 < 301) {matrix.setTextColor (PURPLE);}
-           if (Stocks.pm25 >301) {matrix.setTextColor (MAGENTA);}
-           matrix.print (Stocks.pm25);
+           if (Weather.aqi <51) {matrix.setTextColor  (GREEN);}
+           if (Weather.aqi >50 && Weather.aqi <101) {matrix.setTextColor (YELLOW);}
+           if (Weather.aqi >100 && Weather.aqi <151) {matrix.setTextColor (ORANGE);}
+           if (Weather.aqi >150 && Weather.aqi < 201) {matrix.setTextColor (RED);}
+           if (Weather.aqi >200 && Weather.aqi < 301) {matrix.setTextColor (PURPLE);}
+           if (Weather.aqi >301) {matrix.setTextColor (MAGENTA);}
+           matrix.print (Weather.aqi);
            matrix.setTextColor (WHITE);
            matrix.print ("]");
        }
        
-
        http.end();
        return (true);
   }
@@ -415,6 +425,7 @@ int getStock (const char * stock_symbol,const char *stock_apikey) {
 
    //Here, so something b0rked.
    http.end();
+   return (false);
   /*const char* stock_symbol = jsonBuffer["01. symbol"]; // "TSLA"
   const char* stock_open = root["02. open"]; // "232.9900"
   const char* stock_high = root["03. high"]; // "235.7700"
@@ -467,6 +478,7 @@ int getNews (const char *apiname, const char *apikey) {
        if (error) { //Failed JSON
           DEBUG_PRINTLN ("[HTTP] Json Parse Failed");
           DEBUG_PRINTLN (error.c_str());
+          http.end();
           return (false);
        }
 
@@ -489,12 +501,17 @@ int getNews (const char *apiname, const char *apikey) {
            //DEBUG_PRINTLN (strText);
        }
        DEBUG_PRINTLN ("[HTTP] Got News");
+       http.end();
        return (true);
   }
   else { //Failed HTTP
     DEBUG_PRINTLN ("[HTTP] Failed to get News");
+    http.end();
     return (false);
   }
 
+  DEBUG_PRINTLN ("[GETNEWS] Failed everything wierdly...");
+  http.end();
+  return (false);
   
 }
