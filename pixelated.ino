@@ -927,6 +927,10 @@ void setup() {
   
   screenPowered=true;
   DEBUG_PRINTLN ("Setup complete");
+
+  //Default to what for testing?
+
+  fx = STOCKS;
   
 }
 
