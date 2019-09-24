@@ -53,7 +53,7 @@ int sunny_ico [50] = {
 
 
 struct stock {
-  char stock_symbol[10]="TSLA";  //Default to TESLA as I own stock ;)
+  char stock_symbol[10]="ARR";  //Default to TESLA as I own stock ;)
   float stock_open =  232.9900;
   float stock_high = 235.7700;
   float stock_low = 228.7500;
@@ -180,7 +180,7 @@ int getPM25() {
     String strCall = "https://api.waqi.info/feed/shanghai/?token=278124ab53afb94ed8ee2ce141e710dc5ae47526";
     HTTPClient http;
     
-    http.begin (strCall);
+    http.begin (strCall, root_ca);
     int httpCode = http.GET();
     if (httpCode>0) {
       String payload = http.getString();
@@ -193,6 +193,7 @@ int getPM25() {
       if (error) { //Failed JSON
           DEBUG_PRINTLN ("[HTTP] Json Parse Failed");
           DEBUG_PRINTLN (error.c_str());
+          http.end();
           return (false);
        }
 
@@ -203,6 +204,7 @@ int getPM25() {
 
          DEBUG_PRINTLN ("[HTTP] Json Object Failure");
          DEBUG_PRINTLN (error.c_str());
+         http.end();
          return( false);
          
        }
@@ -212,10 +214,15 @@ int getPM25() {
           int data_aqi = aqi["aqi"]; 
           DEBUG_PRINTLN (data_aqi);
           sprintdiv();
+          http.end();
           return (data_aqi); // 59  
        }
     }
+
+    http.end();
 }
+
+
 
 int getStock (const char * stock_symbol,const char *stock_apikey) {
   String strCall;
@@ -242,9 +249,14 @@ int getStock (const char * stock_symbol,const char *stock_apikey) {
     //Lets setup a http client 
     HTTPClient http;
     
-    http.begin (strCall);
+    http.setTimeout(2000);
+    http.begin (strCall,root_ca);
     int httpCode = http.GET();
 
+    DEBUG_PRINTLN ("HTTP GET");
+
+    DEBUG_PRINTLN();
+    DEBUG_PRINT ("HTTP CODE");   DEBUG_PRINT (httpCode );  DEBUG_PRINT (" STATUS "); DEBUG_PRINTLN(err);
   #else 
     int  httpCode= true;
   #endif
@@ -255,7 +267,7 @@ int getStock (const char * stock_symbol,const char *stock_apikey) {
        DEBUG_PRINTLN();
        DEBUG_PRINT ("HTTP CODE");   DEBUG_PRINT (httpCode);  DEBUG_PRINT (" STATUS "); DEBUG_PRINTLN(err);
        DEBUG_PRINTLN (strCall);
-       delay (1000); //delay 1 seconds
+       //delay (1000); //delay 1 seconds
        
        String payload = http.getString();
        
@@ -270,6 +282,7 @@ int getStock (const char * stock_symbol,const char *stock_apikey) {
        if (error) { //Failed JSON
           DEBUG_PRINTLN ("[HTTP] Json Parse Failed");
           DEBUG_PRINTLN (error.c_str());
+          http.end();
           return (false);
        }
 
@@ -281,6 +294,7 @@ int getStock (const char * stock_symbol,const char *stock_apikey) {
 
          DEBUG_PRINTLN ("[HTTP] Json Object Failure");
          DEBUG_PRINTLN (error.c_str());
+         http.end();
          return( false);
          
        }
@@ -352,15 +366,18 @@ int getStock (const char * stock_symbol,const char *stock_apikey) {
        matrix.print (pm);
        matrix.setTextColor (WHITE);
        matrix.print ("]");
+
+       http.end();
        return (true);
   }
   else { //Failed HTTP
     DEBUG_PRINTLN ("[HTTP] Failed to get Stock");
+    http.end();
     return (false);
   }
 
    //Here, so HTTP get and Parse must have worked!
-   
+   http.end();
   /*const char* stock_symbol = jsonBuffer["01. symbol"]; // "TSLA"
   const char* stock_open = root["02. open"]; // "232.9900"
   const char* stock_high = root["03. high"]; // "235.7700"
@@ -389,7 +406,7 @@ int getNews (const char *apiname, const char *apikey) {
     //Lets setup a http client 
     HTTPClient http;
     
-    http.begin (strCall);
+    http.begin (strCall, root_ca);
     int httpCode = http.GET();
 
  
