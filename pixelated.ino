@@ -928,8 +928,8 @@ void setup() {
   screenPowered=true;
   DEBUG_PRINTLN ("Setup complete");
 
-  //Default to what for testing?
 
+  //Default to something for testing?
   fx = STOCKS;
   
 }
